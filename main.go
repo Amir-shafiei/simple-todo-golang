@@ -5,13 +5,17 @@ import (
 	"awesomeProject19/handlers"
 	"awesomeProject19/middleware"
 	"awesomeProject19/models"
+	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 func main() {
 	var UserHandler handlers.UserHandler
 	var TaskHandler handlers.TaskHandler
+	godotenv.Load()
+	port := os.Getenv("RUNNING_PORT")
 	database := db.Connect()
 	err := database.AutoMigrate(&models.User{}, &models.Task{})
 	if err != nil {
@@ -43,6 +47,6 @@ func main() {
 	api.PUT("/tasks/", middleware.Authenticate(), TaskHandler.UpdateTask)
 	api.DELETE("/tasks/:id", middleware.Authenticate(), TaskHandler.DeleteTask)
 	api.PATCH("/tasks/:id/done", middleware.Authenticate(), TaskHandler.MarkAsDone)
-	r.Run(":8080")
+	r.Run(":" + port)
 
 }
