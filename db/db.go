@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"os"
 	"sync"
 
@@ -21,9 +22,14 @@ func Connect() *gorm.DB {
 		port := os.Getenv("DB_PORT")
 		dbname := os.Getenv("DB_NAME")
 
-		dsn := username + ":" + password +
-			"@tcp(" + host + ":" + port + ")/" + dbname +
-			"?charset=utf8mb4&parseTime=True&loc=Local"
+		// چک ساده برای جلوگیری از crash بی‌دلیل
+		if username == "" || password == "" || host == "" || port == "" || dbname == "" {
+			panic("missing database environment variables")
+		}
+
+		dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+			username, password, host, port, dbname,
+		)
 
 		db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 		if err != nil {
