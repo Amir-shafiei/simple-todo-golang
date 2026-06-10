@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>داشبورد — Taskly</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #0F0F1A;
+            --surface:   #1A1A2E;
+            --surface2:  #22223A;
+            --surface3:  #2A2A45;
+            --accent:    #4FC3F7;
+            --accent2:   #A78BFA;
+            --text:      #F0F0F0;
+            --muted:     #8A8A9A;
+            --border:    rgba(255,255,255,0.08);
+            --success:   #6EE7B7;
+            --error:     #F87171;
+            --warning:   #FBBF24;
+            --sidebar-w: 240px;
+        }
+
+        html, body { height: 100%; }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Vazirmatn', sans-serif;
+            min-height: 100vh;
+            display: flex;
+        }
+
+        /* ══════════════════════════════
+           SIDEBAR
+        ══════════════════════════════ */
+        .sidebar {
+            width: var(--sidebar-w);
+            flex-shrink: 0;
+            background: var(--surface);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 28px 0;
+            position: fixed;
+            top: 0; right: 0;
+            height: 100vh;
+            z-index: 100;
+        }
+
+        .sidebar-logo {
+            display: flex; align-items: center; gap: 10px;
+            padding: 0 22px 28px;
+            font-family: 'Bricolage Grotesque', 'Vazirmatn', sans-serif;
+            font-size: 1.25rem; font-weight: 800;
+            color: var(--text); text-decoration: none;
+            border-bottom: 1px solid var(--border);
+        }
+        .logo-icon {
+            width: 32px; height: 32px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .logo-icon svg { width: 16px; height: 16px; }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 20px 12px;
+            display: flex; flex-direction: column; gap: 4px;
+        }
+
+        .nav-label {
+            font-size: 0.68rem; font-weight: 700;
+            letter-spacing: 0.1em; color: var(--muted);
+            text-transform: uppercase;
+            padding: 0 10px;
+            margin: 12px 0 6px;
+        }
+        .nav-label:first-child { margin-top: 0; }
+
+        .nav-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 9px 12px;
+            border-radius: 10px;
+            font-size: 0.88rem; font-weight: 500;
+            color: var(--muted);
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+            border: none; background: none;
+            width: 100%; text-align: right;
+        }
+        .nav-item svg { flex-shrink: 0; }
+        .nav-item:hover { background: var(--surface2); color: var(--text); }
+        .nav-item.active { background: rgba(167,139,250,0.12); color: var(--accent2); }
+        .nav-item .badge {
+            margin-right: auto;
+            background: var(--accent2);
+            color: #0F0F1A;
+            font-size: 0.68rem; font-weight: 700;
+            padding: 1px 7px; border-radius: 20px;
+        }
+
+        .sidebar-footer {
+            padding: 16px 12px 0;
+            border-top: 1px solid var(--border);
+        }
+        .user-chip {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: var(--surface2);
+        }
+        .user-avatar {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent2), var(--accent));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.8rem; font-weight: 700; color: #0F0F1A;
+            flex-shrink: 0;
+        }
+        .user-name { font-size: 0.85rem; font-weight: 600; flex: 1; }
+        .btn-logout {
+            background: none; border: none; cursor: pointer;
+            color: var(--muted); padding: 4px;
+            transition: color 0.15s; border-radius: 6px;
+        }
+        .btn-logout:hover { color: var(--error); }
+
+        /* ══════════════════════════════
+           MAIN CONTENT
+        ══════════════════════════════ */
+        .main {
+            margin-right: var(--sidebar-w);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* topbar */
+        .topbar {
+            padding: 22px 36px;
+            display: flex; align-items: center; justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            background: rgba(15,15,26,0.8);
+            backdrop-filter: blur(12px);
+            position: sticky; top: 0; z-index: 50;
+        }
+        .topbar-title {
+            font-size: 1.15rem; font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+        .topbar-actions { display: flex; align-items: center; gap: 10px; }
+
+        /* ── filter bar ── */
+        .filter-bar {
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+        }
+        .filter-chip {
+            padding: 6px 14px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 0.8rem; font-weight: 500;
+            color: var(--muted);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .filter-chip:hover { border-color: rgba(167,139,250,0.4); color: var(--text); }
+        .filter-chip.active { background: rgba(167,139,250,0.15); border-color: rgba(167,139,250,0.5); color: var(--accent2); }
+
+        .btn-add {
+            display: flex; align-items: center; gap: 7px;
+            padding: 9px 18px;
+            background: linear-gradient(135deg, var(--accent2), #7C3AED);
+            color: white; font-family: 'Vazirmatn', sans-serif;
+            font-size: 0.88rem; font-weight: 700;
+            border: none; border-radius: 10px; cursor: pointer;
+            box-shadow: 0 3px 14px rgba(167,139,250,0.3);
+            transition: transform 0.15s, box-shadow 0.15s;
+            white-space: nowrap;
+        }
+        .btn-add:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(167,139,250,0.4); }
+        .btn-add:active { transform: scale(0.97); }
+
+        /* content area */
+        .content {
+            padding: 32px 36px;
+            flex: 1;
+        }
+
+        /* stats row */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px 22px;
+            display: flex; align-items: center; gap: 16px;
+        }
+        .stat-icon {
+            width: 42px; height: 42px; border-radius: 11px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .stat-icon.purple { background: rgba(167,139,250,0.15); color: var(--accent2); }
+        .stat-icon.cyan   { background: rgba(79,195,247,0.15);  color: var(--accent); }
+        .stat-icon.green  { background: rgba(110,231,183,0.15); color: var(--success); }
+        .stat-num  { font-size: 1.6rem; font-weight: 700; line-height: 1; }
+        .stat-label{ font-size: 0.78rem; color: var(--muted); margin-top: 3px; }
+
+        /* task list */
+        .tasks-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 14px;
+        }
+        .tasks-title { font-size: 0.85rem; font-weight: 600; color: var(--muted); }
+        .tasks-count { font-size: 0.78rem; color: var(--muted); }
+
+        .task-list { display: flex; flex-direction: column; gap: 8px; }
+
+        .task-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px 18px;
+            display: flex; align-items: center; gap: 14px;
+            transition: border-color 0.15s, transform 0.15s;
+            animation: slideIn 0.25s ease-out both;
+        }
+        .task-card:hover { border-color: rgba(167,139,250,0.25); transform: translateX(-2px); }
+        .task-card.done { opacity: 0.55; }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* checkbox */
+        .task-check {
+            width: 20px; height: 20px; border-radius: 6px;
+            border: 1.5px solid var(--border);
+            background: var(--surface2);
+            cursor: pointer; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        .task-check:hover { border-color: var(--accent2); }
+        .task-check.checked {
+            background: linear-gradient(135deg, var(--accent2), var(--accent));
+            border-color: transparent;
+        }
+        .task-check.checked svg { display: block; }
+        .task-check svg { display: none; width: 11px; height: 11px; }
+
+        .task-body { flex: 1; min-width: 0; }
+        .task-title {
+            font-size: 0.92rem; font-weight: 500;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .task-card.done .task-title { text-decoration: line-through; color: var(--muted); }
+        .task-meta { font-size: 0.75rem; color: var(--muted); margin-top: 3px; }
+
+        .task-badge {
+            padding: 3px 10px; border-radius: 20px;
+            font-size: 0.72rem; font-weight: 600;
+            flex-shrink: 0;
+        }
+        .task-badge.todo { background: rgba(167,139,250,0.12); color: var(--accent2); }
+        .task-badge.done-badge { background: rgba(110,231,183,0.12); color: var(--success); }
+
+        .task-actions { display: flex; gap: 4px; flex-shrink: 0; }
+        .task-btn {
+            width: 30px; height: 30px; border-radius: 8px;
+            background: none; border: 1px solid transparent;
+            cursor: pointer; color: var(--muted);
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.15s;
+        }
+        .task-btn:hover.edit-btn  { background: rgba(79,195,247,0.1); border-color: rgba(79,195,247,0.25); color: var(--accent); }
+        .task-btn:hover.del-btn   { background: rgba(248,113,113,0.1); border-color: rgba(248,113,113,0.25); color: var(--error); }
+
+        /* empty state */
+        .empty-state {
+            display: flex; flex-direction: column; align-items: center;
+            padding: 64px 0; text-align: center; gap: 12px;
+            color: var(--muted);
+        }
+        .empty-state svg { opacity: 0.3; }
+        .empty-state p { font-size: 0.9rem; }
+
+        /* pagination */
+        .pagination {
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            margin-top: 28px;
+        }
+        .page-btn {
+            width: 34px; height: 34px; border-radius: 8px;
+            background: var(--surface); border: 1px solid var(--border);
+            color: var(--muted); cursor: pointer; font-family: 'Vazirmatn', sans-serif;
+            font-size: 0.85rem; display: flex; align-items: center; justify-content: center;
+            transition: all 0.15s;
+        }
+        .page-btn:hover:not(:disabled) { background: var(--surface2); color: var(--text); }
+        .page-btn.active { background: rgba(167,139,250,0.15); border-color: rgba(167,139,250,0.4); color: var(--accent2); font-weight: 700; }
+        .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* ══════════════════════════════
+           MODAL
+        ══════════════════════════════ */
+        .modal-overlay {
+            position: fixed; inset: 0; z-index: 200;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(6px);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.2s;
+        }
+        .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+        .modal {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 28px;
+            width: 420px; max-width: calc(100vw - 40px);
+            transform: scale(0.95) translateY(12px);
+            transition: transform 0.2s;
+        }
+        .modal-overlay.open .modal { transform: scale(1) translateY(0); }
+
+        .modal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 22px;
+        }
+        .modal-title { font-size: 1rem; font-weight: 700; }
+        .modal-close {
+            width: 28px; height: 28px; border-radius: 8px;
+            background: none; border: none; cursor: pointer;
+            color: var(--muted); display: flex; align-items: center; justify-content: center;
+            transition: background 0.15s, color 0.15s;
+        }
+        .modal-close:hover { background: var(--surface2); color: var(--text); }
+
+        .modal-field { display: flex; flex-direction: column; gap: 7px; margin-bottom: 16px; }
+        .modal-field label { font-size: 0.82rem; font-weight: 600; color: var(--muted); }
+        .modal-field input {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 11px 14px;
+            color: var(--text); font-family: 'Vazirmatn', sans-serif;
+            font-size: 0.92rem; outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .modal-field input:focus {
+            border-color: rgba(167,139,250,0.5);
+            box-shadow: 0 0 0 3px rgba(167,139,250,0.1);
+        }
+        .modal-field input.input-error {
+            border-color: rgba(248,113,113,0.5);
+            box-shadow: 0 0 0 3px rgba(248,113,113,0.1);
+        }
+        .modal-err { font-size: 0.76rem; color: var(--error); min-height: 16px; }
+
+        .modal-actions { display: flex; gap: 10px; margin-top: 6px; }
+        .btn-cancel {
+            flex: 1; padding: 11px;
+            background: var(--surface2); border: 1px solid var(--border);
+            color: var(--muted); font-family: 'Vazirmatn', sans-serif;
+            font-size: 0.9rem; font-weight: 600;
+            border-radius: 10px; cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+        .btn-cancel:hover { background: var(--surface3); color: var(--text); }
+        .btn-confirm {
+            flex: 1; padding: 11px;
+            background: linear-gradient(135deg, var(--accent2), #7C3AED);
+            color: white; font-family: 'Vazirmatn', sans-serif;
+            font-size: 0.9rem; font-weight: 700;
+            border: none; border-radius: 10px; cursor: pointer;
+            box-shadow: 0 3px 14px rgba(167,139,250,0.25);
+            transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+        }
+        .btn-confirm:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(167,139,250,0.4); }
+        .btn-confirm:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* delete confirm modal */
+        .del-modal-body { text-align: center; padding: 8px 0 20px; }
+        .del-modal-body p { color: var(--muted); font-size: 0.9rem; line-height: 1.6; margin-top: 8px; }
+        .del-modal-body strong { color: var(--text); }
+        .btn-del-confirm {
+            flex: 1; padding: 11px;
+            background: rgba(248,113,113,0.15);
+            border: 1px solid rgba(248,113,113,0.3);
+            color: var(--error); font-family: 'Vazirmatn', sans-serif;
+            font-size: 0.9rem; font-weight: 700;
+            border-radius: 10px; cursor: pointer;
+            transition: background 0.15s;
+        }
+        .btn-del-confirm:hover { background: rgba(248,113,113,0.25); }
+
+        /* ── TOAST ── */
+        .toast-wrap {
+            position: fixed; bottom: 28px; left: 28px;
+            display: flex; flex-direction: column; gap: 8px;
+            z-index: 999; pointer-events: none;
+        }
+        .toast {
+            display: flex; align-items: center; gap: 10px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 0.85rem; font-weight: 500;
+            backdrop-filter: blur(12px);
+            pointer-events: all;
+            animation: toastIn 0.3s ease-out both;
+        }
+        .toast.success { background: rgba(110,231,183,0.15); border: 1px solid rgba(110,231,183,0.3); color: var(--success); }
+        .toast.error   { background: rgba(248,113,113,0.15); border: 1px solid rgba(248,113,113,0.3); color: var(--error); }
+        @keyframes toastIn { from { opacity:0; transform: translateY(12px); } to { opacity:1; transform: translateY(0); } }
+
+        /* spinner */
+        .spin {
+            width: 14px; height: 14px;
+            border: 2px solid rgba(255,255,255,0.3); border-top-color: white;
+            border-radius: 50%; animation: rotate 0.7s linear infinite;
+        }
+        @keyframes rotate { to { transform: rotate(360deg); } }
+
+        /* skeleton loader */
+        .skeleton {
+            background: linear-gradient(90deg, var(--surface2) 25%, var(--surface3) 50%, var(--surface2) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.4s infinite;
+            border-radius: 8px;
+        }
+        @keyframes shimmer { to { background-position: -200% 0; } }
+        .skel-card {
+            height: 58px; border-radius: 12px; margin-bottom: 8px;
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 780px) {
+            :root { --sidebar-w: 0px; }
+            .sidebar { display: none; }
+            .main { margin-right: 0; }
+            .content { padding: 20px 18px; }
+            .topbar { padding: 16px 18px; }
+            .stats-row { grid-template-columns: 1fr 1fr; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation: none !important; transition: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ══ SIDEBAR ══ -->
+<aside class="sidebar">
+    <a href="/" class="sidebar-logo">
+        <div class="logo-icon">
+            <svg viewBox="0 0 20 20" fill="none">
+                <path d="M4 10.5L8.5 15L16 6" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
+        Taskly
+    </a>
+
+    <nav class="sidebar-nav">
+        <span class="nav-label">منو</span>
+        <button class="nav-item active" onclick="setFilter('all')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+            </svg>
+            همه تسک‌ها
+            <span class="badge" id="sidebarAllCount">0</span>
+        </button>
+        <button class="nav-item" onclick="setFilter('false')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+            در انتظار
+            <span class="badge" id="sidebarTodoCount" style="background:var(--accent2)">0</span>
+        </button>
+        <button class="nav-item" onclick="setFilter('true')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            انجام‌شده
+            <span class="badge" id="sidebarDoneCount" style="background:var(--success);color:#0F0F1A">0</span>
+        </button>
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="user-chip">
+            <div class="user-avatar" id="userAvatar">؟</div>
+            <span class="user-name" id="userNameDisplay">کاربر</span>
+            <button class="btn-logout" title="خروج" onclick="logout()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+</aside>
+
+<!-- ══ MAIN ══ -->
+<main class="main">
+
+    <!-- topbar -->
+    <div class="topbar">
+        <span class="topbar-title" id="topbarTitle">همه تسک‌ها</span>
+        <div class="topbar-actions">
+            <div class="filter-bar">
+                <button class="filter-chip active" onclick="setFilter('all')" data-filter="all">همه</button>
+                <button class="filter-chip" onclick="setFilter('false')" data-filter="false">در انتظار</button>
+                <button class="filter-chip" onclick="setFilter('true')" data-filter="true">انجام‌شده</button>
+            </div>
+            <button class="btn-add" onclick="openAddModal()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                تسک جدید
+            </button>
+        </div>
+    </div>
+
+    <!-- content -->
+    <div class="content">
+
+        <!-- stats -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-icon purple">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                    </svg>
+                </div>
+                <div>
+                    <div class="stat-num" id="statAll">—</div>
+                    <div class="stat-label">کل تسک‌ها</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon cyan">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                </div>
+                <div>
+                    <div class="stat-num" id="statTodo">—</div>
+                    <div class="stat-label">در انتظار</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                </div>
+                <div>
+                    <div class="stat-num" id="statDone">—</div>
+                    <div class="stat-label">انجام‌شده</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- task list -->
+        <div class="tasks-header">
+            <span class="tasks-title" id="listLabel">لیست تسک‌ها</span>
+            <span class="tasks-count" id="listCount"></span>
+        </div>
+        <div class="task-list" id="taskList">
+            <div class="skel-card skeleton"></div>
+            <div class="skel-card skeleton"></div>
+            <div class="skel-card skeleton"></div>
+        </div>
+
+        <div class="pagination" id="pagination"></div>
+    </div>
+</main>
+
+<!-- ══ MODAL: ADD / EDIT ══ -->
+<div class="modal-overlay" id="taskModal">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="modal-title" id="modalTitle">تسک جدید</span>
+            <button class="modal-close" onclick="closeModal('taskModal')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-field">
+            <label for="taskTitleInput">عنوان تسک</label>
+            <input type="text" id="taskTitleInput" placeholder="مثلاً: نوشتن گزارش هفتگی" />
+            <span class="modal-err" id="taskTitleErr"></span>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeModal('taskModal')">انصراف</button>
+            <button class="btn-confirm" id="modalConfirmBtn" onclick="confirmTask()">
+                <span id="modalBtnText">ذخیره</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ══ MODAL: DELETE ══ -->
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="modal-title">حذف تسک</span>
+            <button class="modal-close" onclick="closeModal('deleteModal')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+        <div class="del-modal-body">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#F87171" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+            </svg>
+            <p>مطمئنی می‌خوای <strong id="deleteTaskName"></strong> رو حذف کنی؟<br/>این کار قابل بازگشت نیست.</p>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeModal('deleteModal')">انصراف</button>
+            <button class="btn-del-confirm" id="delConfirmBtn" onclick="confirmDelete()">بله، حذف کن</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══ TOASTS ══ -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+    // ══════════════════════════════════════════════════════
+    //  CONFIG  — آدرس API بک‌اندت رو اینجا تنظیم کن
+    // ══════════════════════════════════════════════════════
+    const API = '';   // مثلاً: 'http://localhost:8080'
+
+    // ══════════════════════════════════════════════════════
+    //  STATE
+    // ══════════════════════════════════════════════════════
+    let state = {
+        tasks:       [],
+        page:        1,
+        limit:       10,
+        totalPages:  1,
+        filter:      'all',      // 'all' | 'true' | 'false'
+        editingId:   null,       // null = add mode, number = edit mode
+        deletingTask: null,
+    };
+
+    // ══════════════════════════════════════════════════════
+    //  AUTH helpers
+    // ══════════════════════════════════════════════════════
+    function getToken() {
+        return localStorage.getItem('taskly_token');
+    }
+
+    function authHeaders() {
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${getToken()}`,
+        };
+    }
+
+    function logout() {
+        localStorage.removeItem('taskly_token');
+        window.location.href = '/login';
+    }
+
+    function decodeUsername() {
+        const token = getToken();
+        if (!token) return null;
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            return payload.username || null;
+        } catch { return null; }
+    }
+
+    // ══════════════════════════════════════════════════════
+    //  API calls
+    // ══════════════════════════════════════════════════════
+    async function apiFetch(path, opts = {}) {
+        const res = await fetch(API + path, {
+            ...opts,
+            headers: { ...authHeaders(), ...(opts.headers || {}) },
+        });
+        if (res.status === 401) { logout(); return null; }
+        return res;
+    }
+
+    async function loadTasks() {
+        showSkeleton();
+        let url = `/api/tasks?page=${state.page}&limit=${state.limit}`;
+        if (state.filter !== 'all') url += `&status=${state.filter}`;
+        const res = await apiFetch(url);
+        if (!res) return;
+        const data = await res.json();
+        if (!res.ok) { showToast('error', data.error || 'خطا در بارگذاری تسک‌ها'); return; }
+
+        // بک‌اند: { page, limit, data: [...] }
+        state.tasks = data.data || [];
+        renderTasks();
+        updateStats();
+        renderPagination(data.page, data.limit, state.tasks.length);
+    }
+
+    async function loadStats() {
+        // سه درخواست موازی برای آمار
+        const [resAll, resTodo, resDone] = await Promise.all([
+            apiFetch('/api/tasks?page=1&limit=1'),
+            apiFetch('/api/tasks?page=1&limit=1&status=false'),
+            apiFetch('/api/tasks?page=1&limit=1&status=true'),
+        ]);
+
+        // ما فقط count می‌خوایم — از تعداد نتایج تخمین می‌زنیم
+        // اگه بک‌اند total برگردونه بهتره، اما فعلاً با همین کار می‌کنیم
+        const all  = resAll  && resAll.ok  ? (await resAll.json()).data?.length  || 0 : 0;
+        const todo = resTodo && resTodo.ok ? (await resTodo.json()).data?.length || 0 : 0;
+        const done = resDone && resDone.ok ? (await resDone.json()).data?.length || 0 : 0;
+
+        document.getElementById('statAll').textContent  = all;
+        document.getElementById('statTodo').textContent = todo;
+        document.getElementById('statDone').textContent = done;
+        document.getElementById('sidebarAllCount').textContent  = all;
+        document.getElementById('sidebarTodoCount').textContent = todo;
+        document.getElementById('sidebarDoneCount').textContent = done;
+    }
+
+    async function addTask(title) {
+        const res = await apiFetch('/api/tasks', {
+            method: 'POST',
+            body: JSON.stringify({ title }),
+        });
+        if (!res) return false;
+        const data = await res.json();
+        if (!res.ok) {
+            const msg = data.error === 'task already exists'
+                ? 'این تسک قبلاً وجود دارد.'
+                : (data.error || 'خطا در افزودن تسک');
+            showFieldErr(msg);
+            return false;
+        }
+        return true;
+    }
+
+    async function updateTask(id, title) {
+        const res = await apiFetch('/api/tasks', {
+            method: 'PUT',
+            body: JSON.stringify({ id, title }),
+        });
+        if (!res) return false;
+        const data = await res.json();
+        if (!res.ok) { showFieldErr(data.error || 'خطا در ویرایش تسک'); return false; }
+        return true;
+    }
+
+    async function deleteTask(id) {
+        const res = await apiFetch(`/api/tasks/${id}`, { method: 'DELETE' });
+        if (!res) return false;
+        const data = await res.json();
+        if (!res.ok) { showToast('error', data.error || 'خطا در حذف تسک'); return false; }
+        return true;
+    }
+
+    async function markDone(id) {
+        const res = await apiFetch(`/api/tasks/${id}/done`, { method: 'PATCH' });
+        if (!res) return false;
+        const data = await res.json();
+        if (!res.ok) { showToast('error', data.error || 'خطا'); return false; }
+        return true;
+    }
+
+    // ══════════════════════════════════════════════════════
+    //  RENDER
+    // ══════════════════════════════════════════════════════
+    function showSkeleton() {
+        document.getElementById('taskList').innerHTML = `
+      <div class="skel-card skeleton"></div>
+      <div class="skel-card skeleton"></div>
+      <div class="skel-card skeleton"></div>
+    `;
+    }
+
+    function renderTasks() {
+        const list = document.getElementById('taskList');
+        document.getElementById('listCount').textContent = `${state.tasks.length} مورد`;
+
+        if (state.tasks.length === 0) {
+            list.innerHTML = `
+        <div class="empty-state">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 12h6"/><path d="M12 9v6"/>
+          </svg>
+          <p>هنوز تسکی نداری.<br/>با دکمه «تسک جدید» شروع کن.</p>
+        </div>`;
+            return;
+        }
+
+        list.innerHTML = state.tasks.map((task, i) => `
+      <div class="task-card ${task.status ? 'done' : ''}" style="animation-delay:${i * 0.04}s">
+        <div class="task-check ${task.status ? 'checked' : ''}"
+             onclick="handleMarkDone(${task.id}, ${task.status})"
+             title="${task.status ? 'انجام شده' : 'علامت‌گذاری به عنوان انجام‌شده'}">
+          <svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 6.5L4.5 9L10 3"/>
+          </svg>
+        </div>
+        <div class="task-body">
+          <div class="task-title">${escHtml(task.title)}</div>
+          <div class="task-meta">شناسه: ${task.id}</div>
+        </div>
+        <span class="task-badge ${task.status ? 'done-badge' : 'todo'}">
+          ${task.status ? 'انجام شده' : 'در انتظار'}
+        </span>
+        <div class="task-actions">
+          ${!task.status ? `
+          <button class="task-btn edit-btn" onclick="openEditModal(${task.id}, '${escAttr(task.title)}')" title="ویرایش">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+          </button>` : ''}
+          <button class="task-btn del-btn" onclick="openDeleteModal(${task.id}, '${escAttr(task.title)}')" title="حذف">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    `).join('');
+    }
+
+    function updateStats() {
+        // آمار local بر اساس صفحه فعلی (برای نمایش فوری)
+        const done = state.tasks.filter(t => t.status).length;
+        const todo = state.tasks.filter(t => !t.status).length;
+        // آمار کامل رو از loadStats می‌گیریم
+    }
+
+    function renderPagination(page, limit, count) {
+        state.totalPages = count < limit ? page : page + 1; // تخمین ساده
+        const wrap = document.getElementById('pagination');
+        if (state.totalPages <= 1 && page === 1 && count < limit) { wrap.innerHTML = ''; return; }
+
+        wrap.innerHTML = `
+      <button class="page-btn" onclick="goPage(${page - 1})" ${page <= 1 ? 'disabled' : ''}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+      <button class="page-btn active">${page}</button>
+      <button class="page-btn" onclick="goPage(${page + 1})" ${count < limit ? 'disabled' : ''}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+    `;
+    }
+
+    // ══════════════════════════════════════════════════════
+    //  FILTER + PAGE
+    // ══════════════════════════════════════════════════════
+    function setFilter(f) {
+        state.filter = f;
+        state.page   = 1;
+
+        // update chips
+        document.querySelectorAll('.filter-chip').forEach(el => {
+            el.classList.toggle('active', el.dataset.filter === f);
+        });
+        // update sidebar nav
+        document.querySelectorAll('.nav-item').forEach(el => {
+            const map = { 'all': 'all', 'false': 'false', 'true': 'true' };
+            // match by onclick string
+        });
+
+        const titles = { all: 'همه تسک‌ها', 'false': 'تسک‌های در انتظار', 'true': 'تسک‌های انجام‌شده' };
+        document.getElementById('topbarTitle').textContent = titles[f];
+        document.getElementById('listLabel').textContent   = titles[f];
+
+        loadTasks();
+    }
+
+    function goPage(p) {
+        if (p < 1) return;
+        state.page = p;
+        loadTasks();
+    }
+
+    // ══════════════════════════════════════════════════════
+    //  MODAL helpers
+    // ══════════════════════════════════════════════════════
+    function openAddModal() {
+        state.editingId = null;
+        document.getElementById('modalTitle').textContent    = 'تسک جدید';
+        document.getElementById('modalBtnText').textContent  = 'ذخیره';
+        document.getElementById('taskTitleInput').value      = '';
+        document.getElementById('taskTitleErr').textContent  = '';
+        document.getElementById('taskTitleInput').classList.remove('input-error');
+        openModal('taskModal');
+        setTimeout(() => document.getElementById('taskTitleInput').focus(), 150);
+    }
+
+    function openEditModal(id, title) {
+        state.editingId = id;
+        document.getElementById('modalTitle').textContent    = 'ویرایش تسک';
+        document.getElementById('modalBtnText').textContent  = 'ذخیره تغییرات';
+        document.getElementById('taskTitleInput').value      = title;
+        document.getElementById('taskTitleErr').textContent  = '';
+        document.getElementById('taskTitleInput').classList.remove('input-error');
+        openModal('taskModal');
+        setTimeout(() => document.getElementById('taskTitleInput').focus(), 150);
+    }
+
+    function openDeleteModal(id, title) {
+        state.deletingTask = { id, title };
+        document.getElementById('deleteTaskName').textContent = `"${title}"`;
+        openModal('deleteModal');
+    }
+
+    function openModal(id)  { document.getElementById(id).classList.add('open'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+    // ══════════════════════════════════════════════════════
+    //  ACTIONS
+    // ══════════════════════════════════════════════════════
+    async function confirmTask() {
+        const title = document.getElementById('taskTitleInput').value.trim();
+        if (!title) {
+            showFieldErr('عنوان تسک نمی‌تواند خالی باشد.');
+            return;
+        }
+
+        // مقدار editingId رو قبل از await ذخیره می‌کنیم
+        const isEditing = state.editingId !== null;
+        const editId    = state.editingId;
+
+        const btn = document.getElementById('modalConfirmBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spin"></div>';
+
+        let ok;
+        if (!isEditing) {
+            ok = await addTask(title);
+        } else {
+            ok = await updateTask(editId, title);
+        }
+
+        // دکمه رو همیشه بازسازی می‌کنیم
+        btn.disabled = false;
+        btn.innerHTML = `<span id="modalBtnText">${isEditing ? 'ذخیره تغییرات' : 'ذخیره'}</span>`;
+
+        if (ok) {
+            closeModal('taskModal');
+            showToast('success', isEditing ? 'تسک ویرایش شد.' : 'تسک اضافه شد.');
+            await loadTasks();
+            loadStats();
+        }
+    }
+
+    async function confirmDelete() {
+        if (!state.deletingTask) return;
+        const btn = document.getElementById('delConfirmBtn');
+        btn.disabled = true;
+        btn.textContent = 'در حال حذف...';
+
+        const ok = await deleteTask(state.deletingTask.id);
+        btn.disabled = false;
+        btn.textContent = 'بله، حذف کن';
+
+        if (ok) {
+            closeModal('deleteModal');
+            showToast('success', 'تسک حذف شد.');
+            await loadTasks();
+            loadStats();
+        }
+    }
+
+    async function handleMarkDone(id, currentStatus) {
+        if (currentStatus) return; // already done
+        const ok = await markDone(id);
+        if (ok) {
+            showToast('success', 'تسک انجام‌شده علامت خورد ✓');
+            await loadTasks();
+            loadStats();
+        }
+    }
+
+    // ══════════════════════════════════════════════════════
+    //  TOAST
+    // ══════════════════════════════════════════════════════
+    function showToast(type, msg) {
+        const wrap = document.getElementById('toastWrap');
+        const el = document.createElement('div');
+        el.className = `toast ${type}`;
+        const icon = type === 'success'
+            ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`
+            : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
+        el.innerHTML = icon + msg;
+        wrap.appendChild(el);
+        setTimeout(() => el.remove(), 3200);
+    }
+
+    function showFieldErr(msg) {
+        const inp = document.getElementById('taskTitleInput');
+        const err = document.getElementById('taskTitleErr');
+        inp.classList.add('input-error');
+        err.textContent = msg;
+    }
+
+    // ══════════════════════════════════════════════════════
+    //  UTILS
+    // ══════════════════════════════════════════════════════
+    function escHtml(s) {
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function escAttr(s) {
+        return String(s).replace(/'/g, "\\'");
+    }
+
+    // Enter key in modal
+    document.getElementById('taskTitleInput').addEventListener('keydown', e => {
+        if (e.key === 'Enter') confirmTask();
+    });
+    // Clear field error on input
+    document.getElementById('taskTitleInput').addEventListener('input', () => {
+        document.getElementById('taskTitleInput').classList.remove('input-error');
+        document.getElementById('taskTitleErr').textContent = '';
+    });
+    // Close modal on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', e => {
+            if (e.target === overlay) overlay.classList.remove('open');
+        });
+    });
+
+    // ══════════════════════════════════════════════════════
+    //  INIT
+    // ══════════════════════════════════════════════════════
+    (function init() {
+        if (!getToken()) { window.location.href = '/login'; return; }
+
+        // نمایش نام کاربر از JWT
+        const username = decodeUsername();
+        if (username) {
+            document.getElementById('userNameDisplay').textContent = username;
+            document.getElementById('userAvatar').textContent = username.charAt(0).toUpperCase();
+        }
+
+        loadTasks();
+        loadStats();
+    })();
+</script>
+
+</body>
+</html>

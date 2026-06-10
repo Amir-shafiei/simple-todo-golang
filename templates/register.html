@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ثبت‌نام — Taskly</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0F0F1A;
+      --surface:  #1A1A2E;
+      --surface2: #22223A;
+      --accent:   #4FC3F7;
+      --accent2:  #A78BFA;
+      --text:     #F0F0F0;
+      --muted:    #8A8A9A;
+      --border:   rgba(255,255,255,0.08);
+      --success:  #6EE7B7;
+      --error:    #F87171;
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Vazirmatn', sans-serif;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ─── BLOBS ─── */
+    .blobs { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+    .blob { position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.2; }
+    .blob-1 {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, #A78BFA, transparent 70%);
+      top: -120px; left: -80px;
+      animation: f1 11s ease-in-out infinite;
+    }
+    .blob-2 {
+      width: 420px; height: 420px;
+      background: radial-gradient(circle, #4FC3F7, transparent 70%);
+      bottom: -90px; right: -60px;
+      animation: f2 13s ease-in-out infinite;
+    }
+    @keyframes f1 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(28px,36px)} }
+    @keyframes f2 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-22px,-30px)} }
+
+    /* ─── LAYOUT ─── */
+    .page { position: relative; z-index: 1; display: flex; width: 100%; }
+
+    /* LEFT PANEL — FORM */
+    .panel-left {
+      width: 500px; flex-shrink: 0;
+      display: flex; flex-direction: column; justify-content: center;
+      padding: 60px 48px;
+      border-left: 1px solid var(--border);
+      overflow-y: auto;
+    }
+
+    .panel-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-family: 'Bricolage Grotesque', 'Vazirmatn', sans-serif;
+      font-size: 1.4rem; font-weight: 800;
+      color: var(--text); text-decoration: none;
+      margin-bottom: 40px;
+      animation: fadeUp 0.4s ease-out both;
+    }
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .logo-icon svg { width: 18px; height: 18px; }
+
+    .form-eyebrow {
+      font-size: 0.75rem; font-weight: 600;
+      letter-spacing: 0.08em; color: var(--accent2);
+      text-transform: uppercase; margin-bottom: 10px;
+      animation: fadeUp 0.4s ease-out 0.1s both;
+    }
+    .form-title {
+      font-size: 1.9rem; font-weight: 700;
+      letter-spacing: -0.025em; margin-bottom: 6px;
+      animation: fadeUp 0.4s ease-out 0.2s both;
+    }
+    .form-hint {
+      font-size: 0.9rem; color: var(--muted); margin-bottom: 32px;
+      animation: fadeUp 0.4s ease-out 0.3s both;
+    }
+    .form-hint a { color: var(--accent); text-decoration: none; font-weight: 500; }
+    .form-hint a:hover { text-decoration: underline; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .form { display: flex; flex-direction: column; gap: 16px; }
+
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+    .field { display: flex; flex-direction: column; gap: 7px; animation: fadeUp 0.4s ease-out both; }
+    .field:nth-child(1) { animation-delay: 0.35s; }
+    .field:nth-child(2) { animation-delay: 0.42s; }
+    .field:nth-child(3) { animation-delay: 0.49s; }
+    .field:nth-child(4) { animation-delay: 0.56s; }
+
+    .field label { font-size: 0.83rem; font-weight: 600; color: var(--muted); letter-spacing: 0.02em; }
+
+    .input-wrap { position: relative; display: flex; align-items: center; }
+    .input-icon {
+      position: absolute; right: 14px;
+      color: var(--muted); pointer-events: none; transition: color 0.2s;
+    }
+    .field:focus-within .input-icon { color: var(--accent2); }
+
+    .input-wrap input {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 13px 42px 13px 16px;
+      color: var(--text);
+      font-family: 'Vazirmatn', sans-serif;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .input-wrap input::placeholder { color: var(--muted); opacity: 0.7; }
+    .input-wrap input:focus {
+      border-color: rgba(167, 139, 250, 0.5);
+      box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.1);
+    }
+    .input-wrap input.input-error {
+      border-color: rgba(248, 113, 113, 0.5);
+      box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.1);
+    }
+    .input-wrap input.input-valid {
+      border-color: rgba(110, 231, 183, 0.4);
+    }
+
+    .toggle-pass {
+      position: absolute; left: 14px;
+      background: none; border: none;
+      color: var(--muted); cursor: pointer;
+      padding: 0; display: flex; transition: color 0.2s;
+    }
+    .toggle-pass:hover { color: var(--text); }
+
+    /* field-level error message */
+    .field-error {
+      font-size: 0.75rem;
+      color: var(--error);
+      display: none;
+      padding-right: 4px;
+    }
+    .field-error.visible { display: block; }
+
+    /* password strength */
+    .strength-wrap { display: flex; flex-direction: column; gap: 6px; animation: fadeUp 0.4s ease-out 0.63s both; }
+    .strength-bars { display: flex; gap: 5px; }
+    .strength-bar { flex: 1; height: 3px; border-radius: 10px; background: var(--surface2); transition: background 0.3s; }
+    .strength-label { font-size: 0.75rem; color: var(--muted); }
+
+    /* terms */
+    .terms-wrap { animation: fadeUp 0.4s ease-out 0.7s both; }
+    .checkbox-label {
+      display: flex; align-items: flex-start; gap: 9px;
+      font-size: 0.83rem; color: var(--muted);
+      cursor: pointer; line-height: 1.5;
+    }
+    .checkbox-label input[type="checkbox"] {
+      appearance: none; -webkit-appearance: none;
+      width: 17px; height: 17px; min-width: 17px;
+      border: 1.5px solid var(--border);
+      border-radius: 5px; background: var(--surface);
+      cursor: pointer; transition: background 0.2s, border-color 0.2s;
+      position: relative; margin-top: 1px;
+    }
+    .checkbox-label input[type="checkbox"]:checked {
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      border-color: transparent;
+    }
+    .checkbox-label input[type="checkbox"]:checked::after {
+      content: '';
+      position: absolute; top: 2px; right: 4px;
+      width: 5px; height: 8px;
+      border: 2px solid #0F0F1A;
+      border-top: none; border-right: none;
+      transform: rotate(-45deg) scaleX(-1);
+    }
+    .terms-link { color: var(--accent2); text-decoration: none; font-weight: 500; }
+    .terms-link:hover { text-decoration: underline; }
+
+    /* error / success banner */
+    .banner {
+      display: none;
+      align-items: center; gap: 10px;
+      border-radius: 10px; padding: 12px 14px;
+      font-size: 0.85rem;
+      animation: fadeUp 0.25s ease-out both;
+    }
+    .banner.error  { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.25); color: var(--error); }
+    .banner.success{ background: rgba(110,231,183,0.1); border: 1px solid rgba(110,231,183,0.25); color: var(--success); }
+    .banner.visible { display: flex; }
+
+    .btn-submit {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; padding: 15px;
+      background: linear-gradient(135deg, var(--accent2), #7C3AED);
+      color: white; font-family: 'Vazirmatn', sans-serif;
+      font-size: 1rem; font-weight: 700;
+      border: none; border-radius: 12px; cursor: pointer;
+      box-shadow: 0 4px 22px rgba(167,139,250,0.3);
+      transition: transform 0.18s, box-shadow 0.18s, opacity 0.18s;
+      animation: fadeUp 0.4s ease-out 0.8s both;
+    }
+    .btn-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(167,139,250,0.45); }
+    .btn-submit:active:not(:disabled) { transform: scale(0.97); }
+    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .spinner {
+      display: none; width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.3); border-top-color: white;
+      border-radius: 50%; animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .divider {
+      display: flex; align-items: center; gap: 12px;
+      animation: fadeUp 0.4s ease-out 0.9s both;
+    }
+    .divider-line { flex: 1; height: 1px; background: var(--border); }
+    .divider-text { font-size: 0.8rem; color: var(--muted); white-space: nowrap; }
+
+    .btn-google {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%; padding: 13px;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); font-family: 'Vazirmatn', sans-serif;
+      font-size: 0.92rem; font-weight: 500;
+      border-radius: 12px; cursor: pointer;
+      transition: background 0.18s, border-color 0.18s, transform 0.18s;
+      animation: fadeUp 0.4s ease-out 1s both;
+    }
+    .btn-google:hover { background: var(--surface2); border-color: rgba(255,255,255,0.15); transform: translateY(-1px); }
+
+    /* RIGHT PANEL */
+    .panel-right {
+      flex: 1; display: flex; flex-direction: column;
+      justify-content: center; align-items: center;
+      padding: 60px 56px; position: relative;
+    }
+    .back-link {
+      position: absolute; top: 28px; left: 28px;
+      display: flex; align-items: center; gap: 6px;
+      color: var(--muted); font-size: 0.85rem; font-weight: 500;
+      text-decoration: none; transition: color 0.2s;
+    }
+    .back-link:hover { color: var(--text); }
+    .panel-right-inner { max-width: 380px; width: 100%; }
+    .panel-heading {
+      font-size: clamp(1.8rem, 3vw, 2.8rem); font-weight: 700;
+      line-height: 1.2; letter-spacing: -0.025em; margin-bottom: 14px;
+    }
+    .gradient-text {
+      background: linear-gradient(135deg, var(--accent2) 0%, var(--accent) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .panel-sub { color: var(--muted); font-size: 1rem; line-height: 1.7; margin-bottom: 48px; }
+
+    .steps { display: flex; flex-direction: column; gap: 20px; }
+    .step {
+      display: flex; align-items: flex-start; gap: 16px;
+      animation: slideInLeft 0.5s ease-out both;
+    }
+    .step:nth-child(1) { animation-delay: 0.5s; }
+    .step:nth-child(2) { animation-delay: 0.65s; }
+    .step:nth-child(3) { animation-delay: 0.8s; }
+    @keyframes slideInLeft {
+      from { opacity: 0; transform: translateX(-18px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    .step-num {
+      width: 36px; height: 36px; flex-shrink: 0; border-radius: 10px;
+      background: var(--surface); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; font-weight: 700; color: var(--accent2);
+    }
+    .step-title { font-size: 0.95rem; font-weight: 600; margin-bottom: 3px; }
+    .step-desc { font-size: 0.83rem; color: var(--muted); line-height: 1.5; }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 860px) {
+      .panel-right { display: none; }
+      .panel-left { width: 100%; padding: 60px 28px 48px; min-height: 100vh; border-left: none; }
+      .row-2 { grid-template-columns: 1fr; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="blobs" aria-hidden="true">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+  </div>
+
+  <div class="page">
+
+    <!-- LEFT PANEL — FORM -->
+    <div class="panel-left">
+
+      <a href="/" class="panel-logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 20 20" fill="none">
+            <path d="M4 10.5L8.5 15L16 6" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        Taskly
+      </a>
+
+      <p class="form-eyebrow">ایجاد حساب جدید</p>
+      <h1 class="form-title">بیا شروع کنیم 🚀</h1>
+      <p class="form-hint">
+        قبلاً ثبت‌نام کردی؟ <a href="/login">وارد شو</a>
+      </p>
+
+      <div class="form" id="registerForm">
+
+        <!-- global banner -->
+        <div class="banner error" id="errorBanner" role="alert">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <span id="errorText"></span>
+        </div>
+        <div class="banner success" id="successBanner" role="status">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+          <span id="successText">حساب با موفقیت ساخته شد! در حال انتقال...</span>
+        </div>
+
+        <div class="row-2">
+          <div class="field">
+            <label for="fname">نام</label>
+            <div class="input-wrap">
+              <span class="input-icon">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                </svg>
+              </span>
+              <input type="text" id="fname" name="fname" placeholder="علی" autocomplete="given-name" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="lname">نام خانوادگی</label>
+            <div class="input-wrap">
+              <span class="input-icon">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                </svg>
+              </span>
+              <input type="text" id="lname" name="lname" placeholder="احمدی" autocomplete="family-name" />
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="username">نام کاربری</label>
+          <div class="input-wrap">
+            <span class="input-icon">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            </span>
+            <input type="text" id="username" name="username" placeholder="مثلاً ali_ahmadi" autocomplete="username" />
+          </div>
+          <span class="field-error" id="usernameError"></span>
+        </div>
+
+        <div class="field">
+          <label for="password">رمز عبور</label>
+          <div class="input-wrap">
+            <span class="input-icon">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </span>
+            <input type="password" id="password" name="password" placeholder="حداقل ۸ کاراکتر" autocomplete="new-password" oninput="checkStrength(this.value)" />
+            <button class="toggle-pass" type="button" aria-label="نمایش رمز" onclick="togglePass(this)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+          <span class="field-error" id="passwordError"></span>
+        </div>
+
+        <div class="strength-wrap">
+          <div class="strength-bars" id="strengthBars">
+            <div class="strength-bar" id="s1"></div>
+            <div class="strength-bar" id="s2"></div>
+            <div class="strength-bar" id="s3"></div>
+            <div class="strength-bar" id="s4"></div>
+          </div>
+          <span class="strength-label" id="strengthLabel">امنیت رمز عبور</span>
+        </div>
+
+        <div class="field">
+          <label for="confirm">تکرار رمز عبور</label>
+          <div class="input-wrap">
+            <span class="input-icon">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+            </span>
+            <input type="password" id="confirm" name="confirm" placeholder="رمز را دوباره وارد کنید" autocomplete="new-password" />
+          </div>
+          <span class="field-error" id="confirmError"></span>
+        </div>
+
+        <div class="terms-wrap">
+          <label class="checkbox-label">
+            <input type="checkbox" id="terms" />
+            <span>با <a href="/terms" class="terms-link">شرایط استفاده</a> و <a href="/privacy" class="terms-link">سیاست حریم خصوصی</a> موافقم</span>
+          </label>
+          <span class="field-error" id="termsError" style="margin-top:6px"></span>
+        </div>
+
+        <button class="btn-submit" type="button" id="submitBtn" onclick="handleRegister()">
+          <div class="spinner" id="spinner"></div>
+          <svg id="btnIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+            <line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/>
+          </svg>
+          <span id="btnText">ساخت حساب رایگان</span>
+        </button>
+
+        <div class="divider">
+          <div class="divider-line"></div>
+          <span class="divider-text">یا با</span>
+          <div class="divider-line"></div>
+        </div>
+
+        <button class="btn-google" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          ادامه با گوگل
+        </button>
+
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL — INFO -->
+    <div class="panel-right">
+      <a href="/" class="back-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h14"/><path d="M5 12l6 6"/><path d="M5 12l6-6"/>
+        </svg>
+        بازگشت
+      </a>
+
+      <div class="panel-right-inner">
+        <h2 class="panel-heading">
+          در سه قدم<br />
+          <span class="gradient-text">آماده کار می‌شی</span>
+        </h2>
+        <p class="panel-sub">
+          ثبت‌نام رایگانه و کمتر از یک دقیقه طول می‌کشه.
+        </p>
+
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">۱</div>
+            <div class="step-body">
+              <p class="step-title">حساب بساز</p>
+              <p class="step-desc">با ایمیل یا گوگل خودت ثبت‌نام کن.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">۲</div>
+            <div class="step-body">
+              <p class="step-title">اولین پروژه رو بساز</p>
+              <p class="step-desc">یه لیست کار جدید بساز و کارهاتو اضافه کن.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">۳</div>
+            <div class="step-body">
+              <p class="step-title">شروع کن و پیشرفت کن</p>
+              <p class="step-desc">هر کاری که کامل می‌کنی رو تیک بزن و پیشرفتت رو ببین.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // ─── Toggle password visibility ───
+    function togglePass(btn) {
+      const input = btn.closest('.input-wrap').querySelector('input');
+      const isPass = input.type === 'password';
+      input.type = isPass ? 'text' : 'password';
+      btn.querySelector('svg').style.opacity = isPass ? '0.5' : '1';
+    }
+
+    // ─── Password strength ───
+    function checkStrength(val) {
+      let score = 0;
+      if (val.length >= 8)             score++;
+      if (/[A-Z]/.test(val) || /[a-z]/.test(val)) score++;
+      if (/[0-9]/.test(val))           score++;
+      if (/[^A-Za-z0-9]/.test(val))   score++;
+
+      const colors = ['#F87171','#FBBF24','#60A5FA','#6EE7B7'];
+      const labels = ['ضعیف','متوسط','خوب','عالی'];
+      ['s1','s2','s3','s4'].forEach((id, i) => {
+        document.getElementById(id).style.background = i < score ? colors[score - 1] : 'var(--surface2)';
+      });
+      const lbl = document.getElementById('strengthLabel');
+      lbl.textContent = val.length === 0 ? 'امنیت رمز عبور' : (labels[score - 1] || 'ضعیف');
+      lbl.style.color  = val.length === 0 ? 'var(--muted)' : colors[score - 1];
+    }
+
+    // ─── Field-level helpers ───
+    function setFieldError(inputId, errorId, msg) {
+      const input = document.getElementById(inputId);
+      const err   = document.getElementById(errorId);
+      if (msg) {
+        input.classList.add('input-error');
+        input.classList.remove('input-valid');
+        err.textContent = msg;
+        err.classList.add('visible');
+      } else {
+        input.classList.remove('input-error');
+        input.classList.add('input-valid');
+        err.textContent = '';
+        err.classList.remove('visible');
+      }
+    }
+
+    function clearFieldError(inputId, errorId) {
+      document.getElementById(inputId).classList.remove('input-error', 'input-valid');
+      const err = document.getElementById(errorId);
+      err.textContent = '';
+      err.classList.remove('visible');
+    }
+
+    // ─── Global banner ───
+    function showBanner(type, msg) {
+      ['errorBanner','successBanner'].forEach(id => {
+        document.getElementById(id).classList.remove('visible');
+      });
+      if (type === 'error') {
+        document.getElementById('errorText').textContent = msg;
+        document.getElementById('errorBanner').classList.add('visible');
+      } else {
+        document.getElementById('successBanner').classList.add('visible');
+      }
+    }
+
+    // ─── Loading state ───
+    function setLoading(on) {
+      const btn     = document.getElementById('submitBtn');
+      const spinner = document.getElementById('spinner');
+      const icon    = document.getElementById('btnIcon');
+      const text    = document.getElementById('btnText');
+      btn.disabled          = on;
+      spinner.style.display = on ? 'block' : 'none';
+      icon.style.display    = on ? 'none'  : 'block';
+      text.textContent      = on ? 'در حال ثبت‌نام...' : 'ساخت حساب رایگان';
+    }
+
+    // ─── Client-side validation ───
+    function validate() {
+      let ok = true;
+
+      const username = document.getElementById('username').value.trim();
+      if (!username) {
+        setFieldError('username', 'usernameError', 'نام کاربری الزامی است.');
+        ok = false;
+      } else if (username.length < 3) {
+        setFieldError('username', 'usernameError', 'نام کاربری باید حداقل ۳ کاراکتر باشد.');
+        ok = false;
+      } else {
+        setFieldError('username', 'usernameError', '');
+      }
+
+      const password = document.getElementById('password').value;
+      if (!password) {
+        setFieldError('password', 'passwordError', 'رمز عبور الزامی است.');
+        ok = false;
+      } else if (password.length < 8) {
+        setFieldError('password', 'passwordError', 'رمز عبور باید حداقل ۸ کاراکتر باشد.');
+        ok = false;
+      } else {
+        setFieldError('password', 'passwordError', '');
+      }
+
+      const confirm = document.getElementById('confirm').value;
+      if (confirm !== password) {
+        setFieldError('confirm', 'confirmError', 'رمز عبور و تکرار آن یکسان نیستند.');
+        ok = false;
+      } else {
+        setFieldError('confirm', 'confirmError', '');
+      }
+
+      const terms = document.getElementById('terms').checked;
+      const termsErr = document.getElementById('termsError');
+      if (!terms) {
+        termsErr.textContent = 'پذیرش شرایط استفاده الزامی است.';
+        termsErr.classList.add('visible');
+        ok = false;
+      } else {
+        termsErr.textContent = '';
+        termsErr.classList.remove('visible');
+      }
+
+      return ok;
+    }
+
+    // ─── Main register handler ───
+    async function handleRegister() {
+      // hide previous banners
+      document.getElementById('errorBanner').classList.remove('visible');
+      document.getElementById('successBanner').classList.remove('visible');
+
+      if (!validate()) return;
+
+      setLoading(true);
+
+      // Build the payload: username + password are required by the backend.
+      // first_name / last_name / email are sent if your models.User has those fields;
+      // GORM will simply ignore columns that don't exist in the struct.
+      const payload = {
+        username:   document.getElementById('username').value.trim(),
+        password:   document.getElementById('password').value,
+        first_name: document.getElementById('fname').value.trim()    || undefined,
+        last_name:  document.getElementById('lname').value.trim()    || undefined,
+      };
+      // remove undefined keys so the JSON stays clean
+      Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k]);
+
+      try {
+        const res  = await fetch('register', {   // ← آدرس اندپوینت بک‌اندت
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify(payload),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          // بک‌اند: {"error": "User Already Exists"} یا {"error": "database error"}
+          const msg = data.error === 'User Already Exists'
+            ? 'این نام کاربری قبلاً ثبت شده. نام دیگری انتخاب کن.'
+            : (data.error || 'خطایی رخ داد، دوباره تلاش کن.');
+          showBanner('error', msg);
+
+          if (data.error === 'User Already Exists') {
+            setFieldError('username', 'usernameError', 'این نام کاربری قبلاً استفاده شده.');
+          }
+          return;
+        }
+
+        // بک‌اند: {"message": "Signed Up Successfully"}
+        showBanner('success', '');
+        setTimeout(() => { window.location.href = '/login'; }, 1800);
+
+      } catch (err) {
+        showBanner('error', 'اتصال به سرور برقرار نشد. لطفاً دوباره تلاش کن.');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    // ─── Clear errors on input ───
+    document.getElementById('username').addEventListener('input', () => clearFieldError('username', 'usernameError'));
+    document.getElementById('password').addEventListener('input', () => clearFieldError('password', 'passwordError'));
+    document.getElementById('confirm').addEventListener('input',  () => clearFieldError('confirm',  'confirmError'));
+  </script>
+
+</body>
+</html>
